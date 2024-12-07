@@ -50,9 +50,9 @@ export const DateRangeFetch: React.FC<Props> = ({ sourceId, sourceType }) => {
   };
 
   return (
-    <div className="lastfm-fetch p-4 border rounded">
-      <h3 className="mb-4">Fetch Historical Scrobbles</h3>
-      <div className="flex gap-4 items-end">
+    <div className="shadow-md rounded bg-gray-500 text-white">
+      <div className="p-3 bg-gray-700 font-semibold">Fetch Historical Scrobbles</div>
+      <div className="p-3 flex gap-4 items-end">
         <div>
           <label className="block text-sm font-medium mb-1">From</label>
           <input
