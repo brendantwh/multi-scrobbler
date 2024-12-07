@@ -6,6 +6,7 @@ import { useGetRecentQuery } from "./recentDucks";
 import Tooltip from "../components/Tooltip";
 import { faQuestionCircle } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { DateRangeFetch } from '../components/DateRangeFetch';
 
 const displayOpts = {
     include: recentIncludes,
@@ -31,6 +32,8 @@ const tsTip = <div className="mt-2">
 
 const recent = () => {
     let [searchParams, setSearchParams] = useSearchParams();
+    const sourceId = searchParams.get('name');
+    const sourceType = searchParams.get('type');
     const {
         data = [],
         error,
@@ -53,6 +56,11 @@ const recent = () => {
 
     return (
         <div className="grid">
+            {sourceType === 'lastfm' && sourceId && (
+                <div className="mb-4">
+                    <DateRangeFetch sourceId={sourceId} sourceType={sourceType} />
+                </div>
+            )}
             <div className="shadow-md rounded bg-gray-500 text-white">
                 <div className="p-3 font-semibold bg-gray-700 text-white">
                     <h2>Recently Played{isUpstream ? ' from Source API' : null}<Tooltip message={tipContents}

@@ -182,47 +182,47 @@ export default class MemorySource extends AbstractSource {
                 }
 
                 const [currPlay, prevPlay] = player.update(playerState);
-                const candidate = prevPlay !== undefined ? prevPlay : currPlay;
-                const playChanged = prevPlay !== undefined;
-
-                // wait to discover play until it is stale or current play has changed
-                // so that our discovered track has an accurate "listenedFor" count
-                if (candidate !== undefined && (playChanged || player.isUpdateStale())) {
-                    const stPrefix = `${buildTrackString(candidate, {include: ['trackId', 'artist', 'track']})}`;
-                    const thresholdResults = timePassesScrobbleThreshold(scrobbleThresholds, candidate.data.listenedFor, candidate.data.duration);
-
-                    if (thresholdResults.passes) {
-                        const matchingRecent = this.existingDiscovered(candidate); //sRecentlyPlayed.find(x => playObjDataMatch(x, candidate));
-                        if (matchingRecent === undefined) {
-                            if(this.playerSourceOfTruth === SOURCE_SOT.PLAYER) {
-                                player.logger.verbose(`${stPrefix} added after ${thresholdResultSummary(thresholdResults)} and not matching any prior plays`);
-                            }
-                            newStatefulPlays.push(candidate);
-                        } else {
-                            const {data: {playDate, duration}} = candidate;
-                            const {data: {playDate: rplayDate}} = matchingRecent;
-                            if (!playDate.isSame(rplayDate)) {
-                                if (duration !== undefined) {
-                                    if (playDate.isAfter(rplayDate.add(duration, 's'))) {
-                                        if(this.playerSourceOfTruth === SOURCE_SOT.PLAYER) {
-                                            player.logger.verbose(`${stPrefix} added after ${thresholdResultSummary(thresholdResults)} and having a different timestamp than a prior play`);
+                    const candidate = prevPlay !== undefined ? prevPlay : currPlay;
+                    const playChanged = prevPlay !== undefined;
+    
+                    // wait to discover play until it is stale or current play has changed
+                    // so that our discovered track has an accurate "listenedFor" count
+                    if (candidate !== undefined && (playChanged || player.isUpdateStale())) {
+                        const stPrefix = `${buildTrackString(candidate, {include: ['trackId', 'artist', 'track']})}`;
+                        const thresholdResults = timePassesScrobbleThreshold(scrobbleThresholds, candidate.data.listenedFor, candidate.data.duration);
+    
+                        if (thresholdResults.passes) {
+                            const matchingRecent = this.existingDiscovered(candidate); //sRecentlyPlayed.find(x => playObjDataMatch(x, candidate));
+                            if (matchingRecent === undefined) {
+                                if(this.playerSourceOfTruth === SOURCE_SOT.PLAYER) {
+                                    player.logger.verbose(`${stPrefix} added after ${thresholdResultSummary(thresholdResults)} and not matching any prior plays`);
+                                }
+                                newStatefulPlays.push(candidate);
+                            } else {
+                                const {data: {playDate, duration}} = candidate;
+                                const {data: {playDate: rplayDate}} = matchingRecent;
+                                if (!playDate.isSame(rplayDate)) {
+                                    if (duration !== undefined) {
+                                        if (playDate.isAfter(rplayDate.add(duration, 's'))) {
+                                            if(this.playerSourceOfTruth === SOURCE_SOT.PLAYER) {
+                                                player.logger.verbose(`${stPrefix} added after ${thresholdResultSummary(thresholdResults)} and having a different timestamp than a prior play`);
+                                            }
+                                            newStatefulPlays.push(candidate);
                                         }
-                                        newStatefulPlays.push(candidate);
-                                    }
-                                } else {
-                                    const discoveredPlays = this.getRecentlyDiscoveredPlaysByPlatform(genGroupId(candidate));
-                                    if (discoveredPlays.length === 0 || !playObjDataMatch(discoveredPlays[0], candidate)) {
-                                        // if most recent stateful play is not this track we'll add it
-                                        if(this.playerSourceOfTruth === SOURCE_SOT.PLAYER) {
-                                            player.logger.verbose(`${stPrefix} added after ${thresholdResultSummary(thresholdResults)}. Matched other recent play but could not determine time frame due to missing duration. Allowed due to not being last played track.`);
+                                    } else {
+                                        const discoveredPlays = this.getRecentlyDiscoveredPlaysByPlatform(genGroupId(candidate));
+                                        if (discoveredPlays.length === 0 || !playObjDataMatch(discoveredPlays[0], candidate)) {
+                                            // if most recent stateful play is not this track we'll add it
+                                            if(this.playerSourceOfTruth === SOURCE_SOT.PLAYER) {
+                                                player.logger.verbose(`${stPrefix} added after ${thresholdResultSummary(thresholdResults)}. Matched other recent play but could not determine time frame due to missing duration. Allowed due to not being last played track.`);
+                                            }
+                                            newStatefulPlays.push(candidate);
                                         }
-                                        newStatefulPlays.push(candidate);
                                     }
                                 }
                             }
-                        }
-                    } else if(playChanged && this.playerSourceOfTruth === SOURCE_SOT.PLAYER) {
-                        player.logger.verbose(`${stPrefix} not added because ${thresholdResultSummary(thresholdResults)}.`);
+                        } else if(playChanged && this.playerSourceOfTruth === SOURCE_SOT.PLAYER) {
+                            player.logger.verbose(`${stPrefix} not added because ${thresholdResultSummary(thresholdResults)}.`);
                     }
                 }
 

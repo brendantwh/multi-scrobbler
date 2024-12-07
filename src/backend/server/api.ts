@@ -29,6 +29,8 @@ import { setupPlexRoutes } from "./plexRoutes.js";
 import { setupTautulliRoutes } from "./tautulliRoutes.js";
 import { setupWebscrobblerRoutes } from "./webscrobblerRoutes.js";
 import { Readable } from 'node:stream';
+import LastfmSource from "../sources/LastfmSource.js";
+import dayjs from "dayjs";
 
 const maxBufferSize = 300;
 const output: Record<number, FixedSizeList<LogDataPretty>> =  {};
@@ -281,6 +283,53 @@ export const setupApi = (app: ExpressWithAsync, logger: Logger, appLoggerStream:
         }
 
         return res.json(result);
+    });
+
+    app.use('/api/source/dateRange', sourceRequiredMiddle, bodyParser.json());
+    app.postAsync('/api/source/dateRange', async (req, res) => {   
+        // @ts-expect-error TS(2339): Property 'scrobbleSource' does not exist
+        const source = req.scrobbleSource as AbstractSource;
+        const { from, to } = req.body;
+    
+        if (source.type !== 'lastfm') {
+            return res.status(400).json({error: 'This endpoint only supports Last.fm sources'});
+        }
+    
+        if (!from || !to) {
+            return res.status(400).json({error: 'Missing date range parameters'});
+        }
+    
+        const lastfmSource = source as LastfmSource;
+    
+        try {
+            // Use existing date range method
+            const [history, nowPlaying] = await lastfmSource.getLastfmDateRange(
+                dayjs(from),
+                dayjs(to)
+            );
+    
+            if (history.length === 0) {
+                return res.json({
+                    found: 0,
+                    discovered: 0,
+                    message: 'No tracks found in range'
+                });
+            }
+
+            logger.debug(`history: ${history.length}`);
+    
+            const newPlays = await lastfmSource.processHistoricalPlays(history);
+            logger.debug(`newPlays: ${newPlays.length}`);
+        
+            return res.json({
+                found: history.length,
+                discovered: newPlays.length,
+                message: `Found ${history.length} tracks, ${newPlays.length} new to scrobble`
+            });
+        } catch (e) {
+            lastfmSource.logger.error('Error getting range scrobbles', e);
+            return res.status(500).json({error: e.message});
+        }
     });
 
     app.getAsync('/api/source/art', sourceMiddleFunc(false), async (req, res, next) => {
