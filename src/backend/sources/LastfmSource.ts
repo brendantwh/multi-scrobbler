@@ -251,6 +251,12 @@ export default class LastfmSource extends MemorySource {
     
         // Process each historical play
         for (const play of plays) {
+            // Mark as historical to bypass time validation
+            play.meta = {
+                ...play.meta,
+                historical: true
+            }
+
             // TODO: Fix threshold calculation for historical plays
             // For historical plays from Last.fm, assume they were listened to fully 
             // if duration exists, otherwise pass threshold check

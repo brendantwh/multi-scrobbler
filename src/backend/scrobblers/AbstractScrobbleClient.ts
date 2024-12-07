@@ -262,6 +262,10 @@ export default abstract class AbstractScrobbleClient extends AbstractComponent i
     // time frame is valid as long as the play date for the source track is newer than the oldest play time from the scrobble client
     // ...this is assuming the scrobble client is returning "most recent" scrobbles
     timeFrameIsValid = (playObj: PlayObject) => {
+        // Allow historical scrobbles to bypass time frame validation
+        if (playObj.meta?.historical) {
+            return [true, ''];
+        }
 
         if(this.oldestScrobbleTime === undefined) {
             return [true, ''];

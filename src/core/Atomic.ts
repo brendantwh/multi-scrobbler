@@ -161,6 +161,8 @@ export interface PlayMeta {
 
     comment?: string
 
+    historical?: boolean
+
     [key: string]: any
 }
 
